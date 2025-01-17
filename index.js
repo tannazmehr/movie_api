@@ -2,6 +2,9 @@ const express = require('express');
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+let auth = require('./auth')(app);
+const passport = require('passport');
+require('./passport');
 
 const uuid = require('uuid');
 const path = require('path');
@@ -17,7 +20,7 @@ const Users = Models.User;
 
 
   //List of all movies (READ)-
-  app.get('/movies', async (req,res) => {
+  app.get('/movies', passport.authenticate('jwt', {session: false}), async (req,res) => {
      await Movies.find()
     .then((movies) => {
       res.status(201).json(movies);
@@ -29,7 +32,7 @@ const Users = Models.User;
   });
 
   //List of all users (READ)--
-  app.get('/users', async (req,res) => {
+  /*app.get('/users', async (req,res) => {
     await Users.find()
       .then((users) => {
         res.status(201).json(users);
@@ -38,10 +41,10 @@ const Users = Models.User;
         console.error(error);
         res.status(500).send( 'Error: ' + error);
       });
-   });
+   });*/
   
   //Return Data about a movie by title (READ)-
-  app.get('/movies/:Title' , async(req,res) =>{
+  app.get('/movies/:Title' ,passport.authenticate('jwt', {session: false}), async(req,res) =>{
     await Movies.findOne({ Title: req.params.Title })
     .then((movie) => {
       res.status(201).json(movie);
@@ -54,7 +57,7 @@ const Users = Models.User;
  
 
   //Return data about a genre by name (READ)
-  app.get('/genre/:name', async (req,res) => {
+  app.get('/genre/:name', passport.authenticate('jwt', {session: false}), async (req,res) => {
     await Movies.findOne({'Genre.Name': req.params.name})
       .then((movie) => {
         res.json(movie.Genre);
@@ -66,7 +69,7 @@ const Users = Models.User;
    });
 
   //Return data about a director by name (READ)
-  app.get('/director/:name', async(req,res) => {
+  app.get('/director/:name', passport.authenticate('jwt', {session: false}), async(req,res) => {
     await Movies.findOne({ 'Director.Name': req.params.name})
     .then((movie) => {
         res.status(201).json(movie.Director)
@@ -106,7 +109,10 @@ const Users = Models.User;
 });
 
   //Update a user-
-  app.put('/users/:Username', async (req,res) => {
+  app.put('/users/:Username', passport.authenticate('jwt', { session: false}), async (req,res) => {
+    if(req.user.Username !== req.params.Username){
+      return res.status(400).send('Permission denied');
+    }
     await Users.findOneAndUpdate({ Username: req.params.Username }, { $set:
       {
         Username: req.body.Username,
@@ -126,7 +132,10 @@ const Users = Models.User;
   });
   
   //Add a movie to favorites-
-  app.post('/users/:Username/movies/:movieID' , async (req,res) => {
+  app.post('/users/:Username/movies/:movieID' , passport.authenticate('jwt', {session: false}), async (req,res) => {
+    if(req.user.Username !== req.params.Username){
+      return res.status(400).send('Permission denied');
+    }
     await Users.findOneAndUpdate({ Username: req.params.Username }, {
       $push:{ FavoriteMovies: req.params.movieID}
     },
@@ -141,7 +150,10 @@ const Users = Models.User;
   });
 
   //Delete a movie from favorites-
-  app.delete('/users/:Username/movies/:movieID' , async (req,res) => {
+  app.delete('/users/:Username/movies/:movieID' , passport.authenticate('jwt', {session: false}), async (req,res) => {
+    if(req.user.Username !== req.params.Username){
+      return res.status(400).send('Permission denied');
+    }
     await Users.findOneAndUpdate({ Username: req.params.Username}, {$pull: { FavoriteMovies: req.params.movieID}
     }, {new: true})
     .then((updatedUSer) => {
@@ -154,7 +166,10 @@ const Users = Models.User;
   });
 
   //Delete a user -
-  app.delete('/users/:Username' , async (req,res) => {
+  app.delete('/users/:Username' ,passport.authenticate('jwt', {session: false}), async (req,res) => {
+    if(req.user.Username !== req.params.Username){
+      return res.status(400).send('Permission denied');
+    }
     await Users.findOneAndDelete({ Username: req.params.Username }).
     then((user) => {
       if (!user) {
