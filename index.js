@@ -5,7 +5,7 @@ app.use(express.urlencoded({ extended: true }));
 let auth = require('./auth')(app);
 const passport = require('passport');
 require('./passport');
-
+const { check, validationResult } = require('express-validator');
 const uuid = require('uuid');
 const path = require('path');
 const fs = require('fs');
@@ -82,7 +82,18 @@ const Users = Models.User;
       
 
   //Create a user-
-  app.post('/users', async (req,res) => {
+  app.post('/users',
+    [
+      check('Username', 'Username is required').isLength({min: 5}),
+      check('Username', 'Username only can contain letters and numbers.').isAlphanumeric(),
+      check('Password', 'Password is required.').not().isEmpty(),
+      check('Email', 'Email is not valid.').isEmail()
+    ], async (req,res) => {
+      let errors = validationResult(req);
+      if (!errors.isEmpty()){
+        return res.status(422).json({ errors: errors.array()});
+      }
+     let hashedPassword = Users.hashPassword(req.body.Password);
     await Users.findOne({ Username: req.body.Username})
     .then((user) => {
       if (user) {
@@ -91,7 +102,7 @@ const Users = Models.User;
         Users
           .create({
            Username: req.body.Username,
-           Password: req.body.Password,
+           Password: hashedPassword,
            Email: req.body.Email,
            Birthday: req.body.Birthday
           })
@@ -184,7 +195,7 @@ const Users = Models.User;
     });
   });
 
-
-  app.listen(8080, () => {
-    console.log('Your app is listening on port 8080.');
+  const port = process.env.PORT || 8080
+  app.listen(port, '0.0.0.0' ,() => {
+    console.log('Your app is listening on port ' + port);
   });
