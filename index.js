@@ -11,14 +11,17 @@ const path = require('path');
 const fs = require('fs');
 const morgan = require('morgan');
 const mongoose = require('mongoose');
-mongoose.connect('mongodb://127.0.0.1:27017/movieDB');
+//mongoose.connect('mongodb://127.0.0.1:27017/movieDB');
+mongoose.connect('process.env.CONNECTION_URI', {useNewUrlParser: true, useUndefiedTopology: true});
 const Models = require('./models.js');
 const { error } = require('console');
 
 const Movies = Models.Movie;
 const Users = Models.User;
 
-
+  app.get('/', (req,res) => {
+    res.status(200).send('Welcome to my Circle of movies')
+  });
   //List of all movies (READ)-
   app.get('/movies', passport.authenticate('jwt', {session: false}), async (req,res) => {
      await Movies.find()
