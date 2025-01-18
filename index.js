@@ -12,7 +12,7 @@ const fs = require('fs');
 const morgan = require('morgan');
 const mongoose = require('mongoose');
 //mongoose.connect('mongodb://127.0.0.1:27017/movieDB');
-mongoose.connect(process.env.CONNECTION_URI, {useNewUrlParser: true, useUndefiedTopology: true});
+mongoose.connect(process.env.CONNECTION_URI, { useNewUrlParser: true, useUnifiedTopology: true });
 const Models = require('./models.js');
 const { error } = require('console');
 
