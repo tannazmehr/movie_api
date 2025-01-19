@@ -2,6 +2,8 @@ const express = require('express');
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+const cors = require('cors');
+app.use(cors());
 let auth = require('./auth')(app);
 const passport = require('passport');
 require('./passport');
@@ -123,14 +125,25 @@ const Users = Models.User;
 });
 
   //Update a user-
-  app.put('/users/:Username', passport.authenticate('jwt', { session: false}), async (req,res) => {
-    if(req.user.Username !== req.params.Username){
-      return res.status(400).send('Permission denied');
-    }
+  app.put('/users/:Username',
+    [
+      check('Username', 'Username only can contain letters and numbers.').isAlphanumeric(),
+      check('Email', 'Email is not valid.').isEmail()
+    ],
+    passport.authenticate('jwt', { session: false}),
+    async (req,res) => {
+      let errors = validationResult(req);
+      if (!errors.isEmpty()){
+        return res.status(422).json({ errors: errors.array()});
+      }
+      if(req.user.Username !== req.params.Username){
+        return res.status(400).send('Permission denied');
+      }
+     let hashedPassword = Users.hashPassword(req.body.Password);
     await Users.findOneAndUpdate({ Username: req.params.Username }, { $set:
       {
         Username: req.body.Username,
-        Password: req.body.Password,
+        Password: hashedPassword,
         Email: req.body.Email,
         Birthday: req.body.Birthday
       }
