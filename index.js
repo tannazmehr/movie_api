@@ -125,38 +125,69 @@ const Users = Models.User;
 });
 
   //Update a user-
-  app.put('/users/:Username',
-    [
-      check('Username', 'Username only can contain letters and numbers.').isAlphanumeric(),
-      check('Email', 'Email is not valid.').isEmail()
-    ],
-    passport.authenticate('jwt', { session: false}),
-    async (req,res) => {
-      let errors = validationResult(req);
-      if (!errors.isEmpty()){
-        return res.status(422).json({ errors: errors.array()});
+  app.put(
+    '/users/:Username',
+    passport.authenticate('jwt', { session: false }),
+    async (req, res) => {
+      try {
+        if (req.user.Username !== req.params.Username) {
+          return res.status(403).send('Permission denied');
+        }
+        const { Username, Password, Email, Birthday } = req.body;
+        const updateFields = {};
+  
+        if (Username) {
+          if (Username.length < 5) {
+            return res.status(400).send('Username must be at least 3 characters long');
+          }
+          updateFields.Username = Username;
+        }
+  
+        if (Password) {
+          if (Password.length < 6) {
+            return res.status(400).send('Password must be at least 6 characters long');
+          }
+          let hashedPassword = Users.hashPassword(req.body.Password);
+          updateFields.Password = hashedPassword;
+        }
+  
+        if (Email) {
+          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+          if (!emailRegex.test(Email)) {
+            return res.status(400).send('Invalid email format');
+          }
+          updateFields.Email = Email;
+        }
+  
+        if (Birthday) {
+          const birthdayRegex = /^\d{4}-\d{2}-\d{2}$/; // Format: YYYY-MM-DD
+          if (!birthdayRegex.test(Birthday)) {
+            return res.status(400).send('Invalid birthday format. Use YYYY-MM-DD');
+          }
+          updateFields.Birthday = Birthday;
+        }
+  
+        if (Object.keys(updateFields).length === 0) {
+          return res.status(400).send('No valid fields to update');
+        }
+  
+        const updatedUser = await Users.findOneAndUpdate(
+          { Username: req.params.Username },
+          { $set: updateFields },
+          { new: true }
+        );
+  
+        if (!updatedUser) {
+          return res.status(404).send('User not found');
+        }
+  
+        res.json(updatedUser);
+      } catch (error) {
+        console.error(error);
+        res.status(500).send('Error: ' + error);
       }
-      if(req.user.Username !== req.params.Username){
-        return res.status(400).send('Permission denied');
-      }
-     let hashedPassword = Users.hashPassword(req.body.Password);
-    await Users.findOneAndUpdate({ Username: req.params.Username }, { $set:
-      {
-        Username: req.body.Username,
-        Password: hashedPassword,
-        Email: req.body.Email,
-        Birthday: req.body.Birthday
-      }
-    },
-    {new: true})
-    .then((updatedUSer) => {
-    res.json(updatedUSer);
-    })
-    .catch((error) =>{ 
-      console.error(error);
-      res.status(500).send('Error: ' + error);
-    })
-  });
+    }
+  );
   
   //Add a movie to favorites-
   app.post('/users/:Username/movies/:movieID' , passport.authenticate('jwt', {session: false}), async (req,res) => {
