@@ -25,7 +25,9 @@ const Users = Models.User;
     res.status(200).send('Welcome to my Circle of movies')
   });
   //List of all movies (READ)-
-  app.get('/movies', async (req,res) => {
+  app.get('/movies',
+    passport.authenticate('jwt', { session: false }),
+    async (req,res) => {
      await Movies.find()
     .then((movies) => {
       res.status(201).json(movies);
@@ -49,7 +51,9 @@ const Users = Models.User;
    });*/
   
   //Return Data about a movie by title (READ)-
-  app.get('/movies/:Title' , async(req,res) =>{
+  app.get('/movies/:Title' , 
+    passport.authenticate('jwt', { session: false }),
+    async(req,res) =>{
     await Movies.findOne({ Title: req.params.Title })
     .then((movie) => {
       res.status(201).json(movie);
@@ -62,7 +66,9 @@ const Users = Models.User;
  
 
   //Return data about a genre by name (READ)
-  app.get('/genre/:name', async (req,res) => {
+  app.get('/genre/:name', 
+    passport.authenticate('jwt', { session: false }),
+    async (req,res) => {
     await Movies.findOne({'Genre.Name': req.params.name})
       .then((movie) => {
         res.json(movie.Genre);
@@ -74,7 +80,9 @@ const Users = Models.User;
    });
 
   //Return data about a director by name (READ)
-  app.get('/director/:name', async(req,res) => {
+  app.get('/director/:name', 
+    passport.authenticate('jwt', { session: false }),
+    async(req,res) => {
     await Movies.findOne({ 'Director.Name': req.params.name})
     .then((movie) => {
         res.status(201).json(movie.Director)
