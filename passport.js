@@ -31,8 +31,10 @@ const passport = require('passport'),
                     return callback (null, user);
                 })
                 .catch ((error) => {
+                    if (error) {
                     console.error(error);
                     return callback(error);
+                    }
                 })
             }
         )

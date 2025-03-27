@@ -132,6 +132,27 @@ const Users = Models.User;
    });
 });
 
+app.get('/users/me', 
+  passport.authenticate('jwt', { session: false }), 
+  async (req, res) => {
+    await Users.findOne({ username: req.user.Username })
+      .then((user) => {
+        if (!user) {
+          return res.status(404).json({ message: 'User not found' });
+        }
+        res.status(201).json({
+          username: user.Username,
+          email: user.Email,
+          birthday: user.Birthday // Include only necessary details
+        });
+      })
+      .catch((err) => {
+        console.error(err);
+        res.status(500).send("Error: " + err);
+      });
+});
+
+
   //Update a user-
   app.put(
     '/users/:Username',
