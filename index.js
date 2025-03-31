@@ -21,10 +21,20 @@ const { error } = require('console');
 const Movies = Models.Movie;
 const Users = Models.User;
 
+  /**
+   * @route GET /
+   * @desc Welcome message
+   * @access Public
+   */
   app.get('/', (req,res) => {
     res.status(200).send('Welcome to my Circle of movies')
   });
-  //List of all movies (READ)-
+
+  /**
+   * @route GET /movies
+   * @desc Get all movies
+   * @access Protected (JWT)
+   */
   app.get('/movies',
     passport.authenticate('jwt', { session: false }),
     async (req,res) => {
@@ -37,20 +47,12 @@ const Users = Models.User;
       res.status(500).send( "Error: " + error);
     })
   });
-
-  //List of all users (READ)--
-  /*app.get('/users', async (req,res) => {
-    await Users.find()
-      .then((users) => {
-        res.status(201).json(users);
-      })
-      .catch((error) => {
-        console.error(error);
-        res.status(500).send( 'Error: ' + error);
-      });
-   });*/
   
-  //Return Data about a movie by title (READ)-
+  /**
+   * @route GET /movies/:Title
+   * @desc Get a movie by title
+   * @access Protected (JWT)
+   */
   app.get('/movies/:Title' , 
     passport.authenticate('jwt', { session: false }),
     async(req,res) =>{
@@ -65,7 +67,11 @@ const Users = Models.User;
   });
  
 
-  //Return data about a genre by name (READ)
+  /**
+   * @route GET /genre/:name
+   * @desc Get genre details by name
+   * @access Protected (JWT)
+   */
   app.get('/genre/:name', 
     passport.authenticate('jwt', { session: false }),
     async (req,res) => {
@@ -79,7 +85,11 @@ const Users = Models.User;
       });
    });
 
-  //Return data about a director by name (READ)
+  /**
+   * @route GET /director/:name
+   * @desc Get director details by name
+   * @access Protected (JWT)
+   */
   app.get('/director/:name', 
     passport.authenticate('jwt', { session: false }),
     async(req,res) => {
@@ -94,7 +104,11 @@ const Users = Models.User;
     });
       
 
-  //Create a user-
+  /**
+   * @route POST /users
+   * @desc Register a new user
+   * @access Public
+   */
   app.post('/users',
     [
       check('Username', 'Username is required').isLength({min: 5}),
@@ -132,28 +146,12 @@ const Users = Models.User;
    });
 });
 
-app.get('/users/me', 
-  passport.authenticate('jwt', { session: false }), 
-  async (req, res) => {
-    await Users.findOne({ username: req.user.Username })
-      .then((user) => {
-        if (!user) {
-          return res.status(404).json({ message: 'User not found' });
-        }
-        res.status(201).json({
-          username: user.Username,
-          email: user.Email,
-          birthday: user.Birthday // Include only necessary details
-        });
-      })
-      .catch((err) => {
-        console.error(err);
-        res.status(500).send("Error: " + err);
-      });
-});
 
-
-  //Update a user-
+  /**
+   * @route PUT /users/:Username
+   * @desc Update user info
+   * @access Protected (JWT)
+   */
   app.put(
     '/users/:Username',
     passport.authenticate('jwt', { session: false }),
@@ -218,7 +216,11 @@ app.get('/users/me',
     }
   );
   
-  //Add a movie to favorites-
+  /**
+   * @route POST /users/:Username/movies/:movieID
+   * @desc Add a movie to user's favorites
+   * @access Protected (JWT)
+   */
   app.post('/users/:Username/movies/:movieID' , passport.authenticate('jwt', {session: false}), async (req,res) => {
     if(req.user.Username !== req.params.Username){
       return res.status(400).send('Permission denied');
@@ -236,7 +238,11 @@ app.get('/users/me',
     });
   });
 
-  //Delete a movie from favorites-
+  /**
+   * @route DELETE /users/:Username/movies/:movieID
+   * @desc Remove a movie from user's favorites
+   * @access Protected (JWT)
+   */
   app.delete('/users/:Username/movies/:movieID' , passport.authenticate('jwt', {session: false}), async (req,res) => {
     if(req.user.Username !== req.params.Username){
       return res.status(400).send('Permission denied');
@@ -252,7 +258,11 @@ app.get('/users/me',
     })
   });
 
-  //Delete a user -
+  /**
+   * @route DELETE /users/:Username
+   * @desc Delete a user by username
+   * @access Protected (JWT)
+   */
   app.delete('/users/:Username' ,passport.authenticate('jwt', {session: false}), async (req,res) => {
     if(req.user.Username !== req.params.Username){
       return res.status(400).send('Permission denied');
